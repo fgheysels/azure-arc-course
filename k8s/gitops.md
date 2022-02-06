@@ -49,8 +49,8 @@ Adding the extension:
 ```
 az k8s-extension create --name flux  \
 	--extension-type microsoft.flux \
-	--scope cluster --cluster-name arcaks \
-	--resource-group rg-arc \
+	--scope cluster --cluster-name $clu \
+	--resource-group $rg \
 	--cluster-type connectedClusters
 ```
 
@@ -63,7 +63,7 @@ We will now create a GitOps configuration. The git repository is an example repo
 We can deploy a configuration with the following command:
 
 ```
-az k8s-configuration flux create -g rg-arc -c arcaks -n gitops-demo --namespace gitops-demo \
+az k8s-configuration flux create -g $rg -c $clu -n gitops-demo --namespace gitops-demo \
     -t connectedClusters --scope cluster -u https://github.com/fluxcd/flux2-kustomize-helm-example \
     --branch main  --kustomization name=infra path=./infrastructure prune=true \
     --kustomization name=apps path=./apps/staging prune=true dependsOn=["infra"]
