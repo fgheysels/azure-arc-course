@@ -36,6 +36,8 @@ az group create -g $rg -l LOCATION
 az connectedk8s connect --resource-group $rg --name $clu
 ```
 
+⚠️ Although confusing, you can use the same name for the AKS cluster and the Azure Arc representation of it.
+
 ## Cluster Connect
 
 With kubectl connected to your cluster, run the following commands:
@@ -50,6 +52,21 @@ The above commands do the following:
 - obtain the objectId of the signed-in user
 - create a clusterrolebinding with the cluster-admin role and the signed-in user as the user to bind to the role
 
+
+After running the above commands, use `az connectedk8s proxy -n $clu -g $rg`. You can now run `kubectl` commands in another window. For instance:
+
+- kubectl get nodes
+- kubectl get ns
+
+When the proxy is closed, and you issue kubectl commands, you will see something like below:
+
+```
+The connection to the server 127.0.0.1:47011 was refused - did you specify the right host or port?
+```
+
+You can also run `az connectedk8s proxy -n $clu -g $rg &` to run the proxy in the background. Wait until you see the response of the command and then continue in the same session. This approach is useful on Azure DevOps agents or GitHub Actions. To bring the proxy back to the foreground, use `fg`.
+
+
 ⚠️ Instead of AAD, cluster connect also allows you to connect to the cluster with a service account token. For example:
 
 ```
@@ -60,7 +77,7 @@ SECRET_NAME=$(kubectl get serviceaccount admin-user -o jsonpath='{$.secrets[0].n
 
 TOKEN=$(kubectl get secret ${SECRET_NAME} -o jsonpath='{$.data.token}' | base64 -d | sed $'s/$/\\\n/g')
 
-az connectedk8s proxy -n $CLUSTER_NAME -g $RESOURCE_GROUP --token $TOKEN
+az connectedk8s proxy -n $clu -g $rg --token $TOKEN
 ```
 
 The above commands do the following:
@@ -78,12 +95,23 @@ Generate a JWT token as shown above. For reference, here are the commands again:
 
 ```
 kubectl create serviceaccount admin-user
-kubectl create clusterrolebinding admin-user-binding --clusterrole cluster-admin --serviceaccount default:admin-user
+kubectl create clusterrolebinding viewer-binding --clusterrole cluster-admin --serviceaccount default:admin-user
 SECRET_NAME=$(kubectl get serviceaccount admin-user -o jsonpath='{$.secrets[0].name}')
 TOKEN=$(kubectl get secret ${SECRET_NAME} -o jsonpath='{$.data.token}' | base64 -d | sed $'s/$/\\\n/g')
 ```
 
 When the portal prompts for a token to use resource viewer, past the contents of the TOKEN variable.
+
+You can now view:
+- Namespaces
+- Workloads
+- Services and Ingresses
+- Storage
+- Configuration
+
+Try to find the container image name of the clusteridentityoperator via Resource Viewer. There are several ways to do this.
+
+Can you modify resources on the cluster via Resource Viewer?
 
 ## Extensions
 
@@ -96,8 +124,18 @@ Or use the Azure CLI. For example:
 ```
 az k8s-extension create --name azuremonitor-containers  \
 	--extension-type Microsoft.AzureMonitor.Containers \
-	--scope cluster --cluster-name <clusterName> \
-	--resource-group <resourceGroupName> \
+	--scope cluster --cluster-name $clu \
+	--resource-group $rg \
+	--cluster-type connectedClusters
+```
+
+Also install the flux extension:
+
+```
+az k8s-extension create --name flux  \
+	--extension-type microsoft.flux \
+	--scope cluster --cluster-name $clu \
+	--resource-group $rg \
 	--cluster-type connectedClusters
 ```
 
@@ -106,7 +144,18 @@ Above:
 - --extension-type needs to be set to the specific extension type
 - most extensions are cluster-scoped
 
-List extensions with `az k8s-extension list -c clustername -g rg -t connectedClusters -o table`:
+Check the extensions in the Azure Portal page of the Azure Arc cluster:
+- what's the install status?
+- is auto upgrade minor version enabled? (semantic versioning: MAJOR.MINRO.PATCH)
+
+Check the pods on your cluster (e.g., with k9s). Can you find the pods for both extensions?
+- there should be two extra namespaces for the extensions
+- list the Helm releases in each namespace (quick tip: list the secrets in each namespace)
+- are there pods in the Azure Monitor for Containers namespace? What else can you find in that namespace?
+
+Can you remove the flux extension from the portal? Try it. Check the logs of extension-manager to see what happens under the hood. After a while, the resources in the flux-system namespace should be removed.
+
+List extensions with `az k8s-extension list -c $clu -g $rg -t connectedClusters -o table`:
 
 ```
 Name                     ExtensionType                      Version            ProvisioningState   
@@ -121,7 +170,7 @@ Above, the following extension types were added:
 - microsoft.web.appservice: App Services for Azure Arc
 - microsoft.azuremonitor.containers: Azure Monitor for Containers
 
-Look at the details of a particular extension with `az k8s-extension show -n appservice-ext -c clustername -g rg -t connectedClusters`. The result (example for App Service):
+Look at the details of a particular extension with `az k8s-extension show -n azuremonitor-containers -c $clu -g $rg -t connectedClusters`. The result (example for App Service):
 
 ```json
 {
