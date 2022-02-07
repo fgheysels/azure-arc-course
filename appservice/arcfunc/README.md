@@ -50,3 +50,4 @@ az functionapp create --resource-group $rg --name $functionappname --custom-loca
 # Zip deploy the function app
 
 az functionapp deployment source config-zip --resource-group $rg --name $functionappname --src func.zip
+
