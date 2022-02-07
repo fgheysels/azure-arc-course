@@ -115,6 +115,8 @@ az k8s-extension create \
 
 The above command creates the extension, which is just an ARM resource. Azure Arc for Kubernetes will check for these extensions and start installing the extension with Helm.
 
+⚠️ You might get errors from the above command. They do not always result in a config that does not work. Remember that these services are still in preview. Removing the extension and re-creating it works most of the time. 😉
+
 Get the extension Id with the following command:
 
 ```bash
