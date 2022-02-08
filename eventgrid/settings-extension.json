@@ -1,0 +1,7 @@
+{
+    "Microsoft.CustomLocation.ServiceAccount":"eventgrid-operator",
+    "eventgridbroker.service.serviceType": "ClusterIP",
+    "eventgridbroker.dataStorage.storageClassName": "azurefile",
+    "eventgridbroker.diagnostics.metrics.reporterType":"prometheus",
+    "eventgridbroker.service.supportedProtocols[0]":"http"
+}
