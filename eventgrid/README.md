@@ -115,7 +115,7 @@ Can we use the custom location we used for the App Services extension? It appear
 Failed to perform operation on resource in extended location. Reason: Operation returned an invalid status code 'Forbidden'
 ```
 
-In the portal, when you navigate to the custom location, you will see that the only Arc-enabled service for the location is **appservice-ext** (if you followed the course in order). You can add the **eventgrid-ext** extension to list.
+In the portal, when you navigate to the custom location, you will see that the only Arc-enabled service for the location is **appservice-ext** (if you followed the course in order). You can add the **eventgrid-ext** extension to list. Event Grid topics and subscriptions will be saved in the same namespace than the App Service extension.
 
 ⚠️ It is possible to create multiple custom locations that use the same Arc-enabled cluster but different namespaces.
 
@@ -214,3 +214,41 @@ curl  -k -X POST -H "Content-Type: application/cloudevents-batch+json" -H "aeg-s
 ```
 
 Check that the Event Viewer web app shows the event. Click the event to see the details.
+
+## Optional - subscription with Service Bus queue
+
+Create a **Service Bus Namespace** (Basic tier) and **queue**.
+
+On the topic, create a new **subscription**. Instead of a webhook, use a Service Bus queue and select the namespace and queue you just created.
+
+Send a few messages with curl.
+
+In the Azure Portal, open the page for the queue and use **Service Bus Explorer** to peek at the messages. Each message should contain the payload in the CloudEvents format. The messages also have custom properties that start with **aeg** for **Azure Event Grid**. For example:
+
+- aeg-event-type: Notification
+- aeg-subscription-name: the name of the subscription to the Event Grid topic
+
+Subscriptions are resources of kind **EventSubscription** and apiVersion **eventgrid.microsoft.com/v1alpha1**. The resources are created in the namespace associated to the custom location. To authenticate to Service Bus, the **spec** of the Event Subscription contains a **connectionString** property. It contains a value in the form of:
+
+```
+Endpoint=sb://arcgeba.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SHAREDACCESSKEY;EntityPath=arc
+```
+
+For example:
+
+```yaml
+spec:
+  properties:
+    destination:
+      endpointType: ServiceBusQueue
+      properties:
+        connectionString: Endpoint=sb://arcgeba.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SHAREDACCESSKEY;EntityPath=arc
+    eventDeliverySchema: CloudEventSchemaV1_0
+    filter:
+      isSubjectCaseSensitive: false
+    persistencePolicy: {}
+    retryPolicy:
+      eventExpiryInMinutes: 1440
+      maxDeliveryAttempts: 30
+    topic: arctopic
+```
