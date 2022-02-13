@@ -12,3 +12,4 @@
 Excercises:
 - [APIM](apim/README.md)
 - [Add Traefik Ingress to APIM](apim/traefik/README.md)
+- [Event Grid](eventgrid/README.md)
