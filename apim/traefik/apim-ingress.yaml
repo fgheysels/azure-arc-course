@@ -1,0 +1,17 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: apim-ingress
+spec:
+  rules:
+    # replace IP address below with IP of your ingress controller
+    - host: api.20.126.241.122.nip.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service: 
+                name: apim-gateway-apimgeba-arc-apim-azure-api-management-gateway
+                port: 
+                  name: http

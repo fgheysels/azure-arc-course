@@ -53,7 +53,10 @@ egname=eventgrid-ext
 
 
 
-az k8s-extension create --cluster-type connectedClusters --cluster-name $clu --resource-group $rg --name $egname --extension-type Microsoft.EventGrid --scope cluster --auto-upgrade-minor-version true --release-train Stable --release-namespace eventgrid-system --configuration-settings-file settings-extension.json
+az k8s-extension create --cluster-type connectedClusters --cluster-name $clu \
+  --resource-group $rg --name $egname --extension-type Microsoft.EventGrid \
+  --scope cluster --auto-upgrade-minor-version true --release-train Stable \
+  --release-namespace eventgrid-system --configuration-settings-file settings-extension.json
 ```
 
 The result of creation is JSON like below:
@@ -191,7 +194,9 @@ az eventgrid topic show --name $topicname -g $rg --query "endpoint" --output tsv
 az eventgrid topic key list --name $topicname -g $rg --query "key1" --output tsv
 ```
 
-The endpoint is of the form: http://eventgrid.eventgrid-system:80/topics/TOPICNAME/api/events?api-version=2018-01-01
+⚠️ If the client is internal (pod in cluster), the endpoint is of the form: http://eventgrid.eventgrid-system:80/topics/TOPICNAME/api/events?api-version=2018-01-01
+
+⚠️ If you use the `event-ingress.yaml` in this folder and apply it to the `eventgrid-system` namespace, you can use curl from your machine to send the event. Be sure to set the host in the ingress to a value with the IP of your Traefik service. 
 
 Issue the following curl command from inside the cluster. Replace KEY and ENDPOINT with the values obtained above.
 
