@@ -6,11 +6,13 @@ If you want to deploy via the portal, skip to the next section.
 
 ⚠️ In contrast with App Services, you do not need a custom location to deploy the self-hosted gateway. This is because the gateway can be deployed on any cluster, regardless of being Azure Arc-enabled
 
+First, you need to specify a APIM gateway.  This can be done via the 'gateways' blade in APIM in the Azure Portal.
+
 Deploy the extension with the command below. This immediately deploys the self-hosted gateway.
 
 ```
-endpoint="YOUR ENDPOINT URL"
-key="YOUR AUTH KEY"
+endpoint="<Configuration URL of the Gateway>"
+key="<token of the gateway>"
 clu="AZURE ARC CLUSTER NAME"
 rg="AZURE ARC RESOURCE GROUP NAME"
 
